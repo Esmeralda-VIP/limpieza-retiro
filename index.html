@@ -117,6 +117,9 @@ li.it:first-child{border-top:0}
 .cd.occ{background:#E2ECF6}.cd.in{background:#ECE7F7}.cd.out{background:#DDF0E4}.cd.turn{background:linear-gradient(135deg,#DDF0E4 50%,#ECE7F7 50%)}
 .cd.past{opacity:.38}.cd.today{box-shadow:inset 0 0 0 2px var(--tile);font-weight:700}
 .cd[data-res]{cursor:pointer}.cd.sel{box-shadow:inset 0 0 0 2px #8C7CC4;font-weight:700}
+.wnotes{background:var(--butter);color:#6B5212;border-radius:12px;padding:8px 12px;font-size:.9rem;display:flex;flex-direction:column;gap:3px}
+.wnotes small{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8A6D1C}
+.wnotes .tbc{color:var(--warn);font-weight:700}
 .rchips{display:flex;gap:6px;flex-wrap:wrap}
 .rchip{font:inherit;font-size:.85rem;font-weight:700;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;min-height:36px;cursor:pointer}
 .rchip[aria-pressed="true"]{background:var(--lav);border-color:#D6CCF0;color:var(--lav-ink)}
@@ -341,6 +344,8 @@ function wd(n){ return WD[new Date(n * DAY).getUTCDay()]; }
 function longd(n){ return wd(n) + " " + new Date(n * DAY).toLocaleDateString("es-AR", { day: "numeric", month: "short", timeZone: "UTC" }).replace(".", ""); }
 function rel(n, t){ var d = n - t; return d === 0 ? "hoy" : d === 1 ? "mañana" : d === -1 ? "ayer" : d > 1 ? "en " + d + " días" : "hace " + (-d) + " días"; }
 function hhmm(x){ return x ? x + " h" : ""; }
+var MONEY_RE = /(\$|\busd\b|u\$s|\bars\b|\bpes[oa]s?\b|d[oó]lar|\beuros?\b|pag[oaué]|cobr|transfer|dep[oó]sit|reembols|devoluci[oó]n|tarifa|precio|cost[oó]|factur|\bse[ñn]a\b|efectivo|propina|\bplata\b|dinero|monto|cargo|tarjeta|mercado ?pago|\balias\b|\bcbu\b|\bcvu\b|money|refund|deposit|payment|\bfee\b|\bcash\b|\btip\b)/i;
+function notesOf(v){ return String(v || "").split(/\s*\|\s*/).map(function(x){ return x.trim(); }).filter(function(x){ return x && !MONEY_RE.test(x); }).slice(0, 6); }
 var selRes = null;
 function upList(){ return (D.upcoming || []).map(function(r){ return Object.assign({ a: dnum(r.inDate), b: dnum(r.outDate) }, r); }).sort(function(x, y){ return x.a - y.a; }); }
 function resCard(r, t){
@@ -354,6 +359,7 @@ function resCard(r, t){
   return '<article class="res ' + (now || r.b === t ? "now" : "next") + '"><div class="res-top"><div><div class="res-name">' + esc(r.first) + '</div><div class="muted" style="font-size:.88rem">' + nights + (nights === 1 ? " noche" : " noches") + '</div></div><div class="split">' + pill + g + "</div></div>" +
     '<div class="io"><div><small>Ingreso</small><b>' + longd(r.a) + "</b>" + (r.inTime ? "<span>" + esc(hhmm(r.inTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>" +
     "<div><small>Salida</small><b>" + longd(r.b) + "</b>" + (r.outTime ? "<span>" + esc(hhmm(r.outTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div></div>" +
+    (function(){ var ns = notesOf(r.notes); return ns.length ? '<div class="wnotes"><small>Pedidos del huésped</small>' + ns.map(function(x){ return "<span>" + esc(x).replace(/\((a confirmar)\)/i, '<span class="tbc">($1)</span>') + "</span>"; }).join("") + "</div>" : ""; })() +
     '<div class="clean-day">Limpieza: ' + longd(r.b) + (r.outTime ? ", después de las " + esc(r.outTime) : ", después de la salida") + "</div></article>";
 }
 var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
