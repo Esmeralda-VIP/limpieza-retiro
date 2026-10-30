@@ -100,7 +100,27 @@ li.it:first-child{border-top:0}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin:-6px 0 12px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
-#tf{display:flex;gap:8px;flex-wrap:wrap}#titem{flex:1 1 180px}
+#tf{display:flex;gap:8px;flex-wrap:wrap}#titem{flex:1 1 220px}
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(46,53,64,.04),0 4px 14px rgba(46,53,64,.04)}
+.cal>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px}
+.cal>summary::-webkit-details-marker{display:none}
+.cal>summary b{font-family:var(--fd);font-size:1.1rem;display:block}
+.cal>summary span{font-size:.88rem;color:var(--muted)}
+.chev{width:34px;height:34px;border-radius:50%;background:var(--tile-soft);color:var(--tile);display:grid;place-items:center;flex:none;transition:transform .2s}
+.cal[open] .chev{transform:rotate(180deg)}
+.cal-body{padding:0 14px 16px;display:flex;flex-direction:column;gap:16px}
+.month h4{font-family:var(--fd);margin:0 0 8px;font-size:1rem;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wdh{font-size:.68rem;color:var(--muted);text-align:center;font-weight:700;padding-bottom:2px}
+.cd{height:40px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font:inherit;font-size:.88rem;border:0;background:transparent;color:var(--ink);padding:0;line-height:1.05}
+.cd small{font-size:.55rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.cd.occ{background:#E2ECF6}.cd.in{background:#ECE7F7}.cd.out{background:#DDF0E4}.cd.turn{background:linear-gradient(135deg,#DDF0E4 50%,#ECE7F7 50%)}
+.cd.past{opacity:.38}.cd.today{box-shadow:inset 0 0 0 2px var(--tile);font-weight:700}
+.cd[data-res]{cursor:pointer}.cd.sel{box-shadow:inset 0 0 0 2px #8C7CC4;font-weight:700}
+.rchips{display:flex;gap:6px;flex-wrap:wrap}
+.rchip{font:inherit;font-size:.85rem;font-weight:700;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;min-height:36px;cursor:pointer}
+.rchip[aria-pressed="true"]{background:var(--lav);border-color:#D6CCF0;color:var(--lav-ink)}
+.ro li.it{padding:8px 0}
 
 
 .inst{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px 40px}
@@ -164,41 +184,45 @@ li.it:first-child{border-top:0}
   <div class="mini" id="mini" hidden><span>Instalá la app en tu celular</span><button class="btn small primary" id="mini-go" type="button">Instalar</button></div>
   <nav class="nav" aria-label="Secciones">
     <button type="button" data-v="semana" aria-pressed="true">Semana</button>
-    <button type="button" data-v="compras" aria-pressed="false">Compras<span class="count" id="cnt" hidden></span></button>
+    <button type="button" data-v="compras" aria-pressed="false">Acciones<span class="count" id="cnt" hidden></span></button>
     <button type="button" data-v="notas" aria-pressed="false">Evaluaciones</button>
   </nav>
 
   <main id="v-semana">
     <section>
-      <div class="wk-head"><h2>Esta semana</h2><span class="muted" id="wk-range"></span></div>
-      <div class="days" id="days" aria-label="Los próximos 7 días"></div>
-      <div class="legend"><span><i class="dot" style="background:#C9B9EC"></i>Llegada</span><span><i class="dot" style="background:#A9D8BB"></i>Salida · limpieza</span><span><i class="dot" style="background:#B9D0E8"></i>Ocupado</span></div>
-      <div class="list" id="week"><div class="empty">Cargando…</div></div>
+      <div class="wk-head"><h2 id="now-title">Reserva actual</h2><span class="muted" id="today-lbl"></span></div>
+      <div class="list" id="now"><div class="empty">Cargando…</div></div>
+    </section>
+    <section style="margin-top:22px">
+      <details class="cal" id="cal">
+        <summary><div><b>Calendario de reservas</b><span id="cal-sum"></span></div><i class="chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></i></summary>
+        <div class="cal-body">
+          <div class="legend" style="margin:0"><span><i class="dot" style="background:#C9B9EC"></i>Llegada</span><span><i class="dot" style="background:#A9D8BB"></i>Salida · limpieza</span><span><i class="dot" style="background:#B9D0E8"></i>Ocupado</span></div>
+          <div class="rchips" id="rchips"></div>
+          <div id="months"></div>
+          <div id="resdet"></div>
+        </div>
+      </details>
     </section>
     <section style="margin-top:26px">
       <h2 style="margin-bottom:12px">Lo que quedó pendiente</h2>
       <div class="two">
         <div class="card">
           <h3><i class="dot" style="background:#F2C59E"></i>Para comprar</h3>
-          <ul id="w-buy"></ul>
-          <button class="link-btn" type="button" data-go="compras" style="align-self:flex-start;padding:4px 0">Ver la lista de compras →</button>
+          <ul id="w-buy" class="ro"></ul>
         </div>
         <div class="card">
           <h3><i class="dot" style="background:#C9B9EC"></i>Para hacer</h3>
-          <form id="tf" autocomplete="off">
-            <input id="titem" maxlength="120" placeholder="Ej. cambiar foco del baño" aria-label="Nueva tarea" required>
-            <button class="btn primary small" id="tadd" type="submit" style="min-height:44px">Agregar</button>
-          </form>
-          <ul id="w-todo"></ul>
+          <ul id="w-todo" class="ro"></ul>
         </div>
       </div>
-      <div class="note" id="tnote" hidden></div>
+      <button class="btn" type="button" data-go="compras" style="margin-top:12px">Cargar o marcar en Acciones →</button>
     </section>
   </main>
 
   <main id="v-compras" hidden>
     <section class="card">
-      <h2>¿Qué hace falta en el depto?</h2>
+      <h2>¿Qué hace falta comprar?</h2>
       <form id="f" autocomplete="off">
         <input id="item" maxlength="80" placeholder="Qué falta (ej. lavandina)" aria-label="Qué falta" required>
         <input id="qty" maxlength="20" placeholder="Cantidad" aria-label="Cantidad">
@@ -214,6 +238,15 @@ li.it:first-child{border-top:0}
     <section style="margin-top:22px" id="done-wrap" hidden>
       <h2 style="margin-bottom:10px">Comprado (últimos 30 días)</h2>
       <div class="card"><ul id="done"></ul></div>
+    </section>
+    <section class="card" style="margin-top:30px">
+      <h2>Para hacer</h2>
+      <form id="tf" autocomplete="off">
+        <input id="titem" maxlength="120" placeholder="Qué hay que hacer (ej. cambiar foco del baño)" aria-label="Nueva tarea" required>
+        <button class="btn primary" id="tadd" type="submit">Agregar</button>
+      </form>
+      <div class="note" id="tnote" hidden></div>
+      <ul id="todo"></ul>
     </section>
   </main>
 
@@ -242,7 +275,7 @@ li.it:first-child{border-top:0}
     </section>
   </main>
   <p class="offline" id="off" hidden>Sin conexión: mostrando lo último que se cargó.</p>
-  <p class="muted" style="font-size:.85rem">Las reservas y las notas se actualizan todos los días desde Airbnb. Las compras y tareas las ve Sebastian al instante.</p>
+  <p class="muted" style="font-size:.85rem">Las reservas y las notas se actualizan todos los días desde Airbnb. Lo que se carga en Acciones lo ve Sebastian al instante.</p>
 </div>
 <script>
 var EXEC = "https://script.google.com/macros/s/AKfycbyzWNZePejb5ba_qbvsXl-KcOy0Ppv9LcHOfTq9l08LQxnvieeL_PTmils_XdR2ld65/exec";
@@ -261,7 +294,6 @@ function renderCompras(){
   var pend = D.compras.filter(function(i){ return i.status !== "comprado"; }).reverse();
   var cut = Date.now() - 30 * DAY;
   var done = D.compras.filter(function(i){ return i.status === "comprado" && Date.parse(i.boughtAt) > cut; }).reverse();
-  $("cnt").hidden = !pend.length; $("cnt").textContent = pend.length;
   $("pend").innerHTML = pend.length ? pend.map(function(i){
     return '<li class="it"><div class="si"><b>' + esc(i.text) + (i.qty ? " · " + esc(i.qty) : "") + '</b><span>' + (i.by ? "Pidió " + esc(i.by) + " · " : "") + esc(ft(i.createdAt)) + '</span></div>' +
       '<div class="acts"><button class="btn small primary" data-a="comprado" data-id="' + esc(i.id) + '">Comprado</button><button class="btn small" data-a="quitar" data-id="' + esc(i.id) + '">Quitar</button></div></li>';
@@ -309,42 +341,73 @@ function wd(n){ return WD[new Date(n * DAY).getUTCDay()]; }
 function longd(n){ return wd(n) + " " + new Date(n * DAY).toLocaleDateString("es-AR", { day: "numeric", month: "short", timeZone: "UTC" }).replace(".", ""); }
 function rel(n, t){ var d = n - t; return d === 0 ? "hoy" : d === 1 ? "mañana" : d === -1 ? "ayer" : d > 1 ? "en " + d + " días" : "hace " + (-d) + " días"; }
 function hhmm(x){ return x ? x + " h" : ""; }
+var selRes = null;
+function upList(){ return (D.upcoming || []).map(function(r){ return Object.assign({ a: dnum(r.inDate), b: dnum(r.outDate) }, r); }).sort(function(x, y){ return x.a - y.a; }); }
+function resCard(r, t){
+  var now = r.a <= t && r.b > t, pill;
+  if (r.b === t) pill = '<span class="pill mint">Sale hoy</span>';
+  else if (now) pill = '<span class="pill sky">En el depto ahora</span>';
+  else if (r.b < t) pill = '<span class="pill">Terminada</span>';
+  else pill = '<span class="pill lav">Llega ' + rel(r.a, t) + "</span>";
+  var g = r.guests ? '<span class="pill butter">' + r.guests + (r.guests === 1 ? " huésped" : " huéspedes") + "</span>" : "";
+  var nights = r.b - r.a;
+  return '<article class="res ' + (now || r.b === t ? "now" : "next") + '"><div class="res-top"><div><div class="res-name">' + esc(r.first) + '</div><div class="muted" style="font-size:.88rem">' + nights + (nights === 1 ? " noche" : " noches") + '</div></div><div class="split">' + pill + g + "</div></div>" +
+    '<div class="io"><div><small>Ingreso</small><b>' + longd(r.a) + "</b>" + (r.inTime ? "<span>" + esc(hhmm(r.inTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>" +
+    "<div><small>Salida</small><b>" + longd(r.b) + "</b>" + (r.outTime ? "<span>" + esc(hhmm(r.outTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div></div>" +
+    '<div class="clean-day">Limpieza: ' + longd(r.b) + (r.outTime ? ", después de las " + esc(r.outTime) : ", después de la salida") + "</div></article>";
+}
+var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function renderCal(up, t){
+  if (!up.length) { $("cal-sum").textContent = "No hay reservas cargadas."; $("months").innerHTML = ""; $("rchips").innerHTML = ""; $("resdet").innerHTML = ""; return; }
+  var last = up[up.length - 1].b;
+  $("cal-sum").textContent = "Hasta el " + longd(last) + " · " + up.length + (up.length === 1 ? " reserva" : " reservas");
+  if (selRes !== null && !up[selRes]) selRes = null;
+  $("rchips").innerHTML = up.map(function(r, i){ return '<button type="button" class="rchip" data-res="' + i + '" aria-pressed="' + (selRes === i) + '">' + esc(r.first) + " · " + fd(r.inDate) + " – " + fd(r.outDate) + "</button>"; }).join("");
+  var d0 = new Date(t * DAY), y = d0.getUTCFullYear(), m = d0.getUTCMonth(), html = "";
+  var dl = new Date(last * DAY), ly = dl.getUTCFullYear(), lm = dl.getUTCMonth();
+  while (y < ly || (y === ly && m <= lm)) {
+    var first = Math.round(Date.UTC(y, m, 1) / DAY), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    var lead = (new Date(first * DAY).getUTCDay() + 6) % 7, g = "";
+    ["L","M","M","J","V","S","D"].forEach(function(w){ g += '<div class="wdh">' + w + "</div>"; });
+    for (var k = 0; k < lead; k++) g += "<div></div>";
+    for (var dd = 0; dd < days; dd++) {
+      var n = first + dd, cls = [], tag = "", ri = null, isIn = false, isOut = false;
+      up.forEach(function(r, i){
+        if (n === r.a) { isIn = true; ri = i; }
+        else if (n === r.b) { isOut = true; if (ri === null) ri = i; }
+        else if (n > r.a && n < r.b) { cls.push("occ"); ri = i; }
+      });
+      if (isIn && isOut) { cls = ["turn"]; tag = "sale/llega"; } else if (isIn) { cls = ["in"]; tag = "llega"; } else if (isOut) { cls = ["out"]; tag = "sale"; }
+      if (n < t) cls.push("past");
+      if (n === t) cls.push("today");
+      if (ri !== null && selRes === ri) cls.push("sel");
+      g += ri !== null ? '<button type="button" class="cd ' + cls.join(" ") + '" data-res="' + ri + '" aria-label="' + longd(n) + ", " + esc(up[ri].first) + '">' + (dd + 1) + (tag ? "<small>" + tag + "</small>" : "") + "</button>"
+                       : '<div class="cd ' + cls.join(" ") + '">' + (dd + 1) + "</div>";
+    }
+    html += '<div class="month"><h4>' + MES[m] + " " + y + '</h4><div class="grid">' + g + "</div></div>";
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  $("months").innerHTML = html;
+  $("resdet").innerHTML = selRes !== null ? resCard(up[selRes], t) : '<p class="muted" style="margin:0;font-size:.9rem">Tocá una reserva o un día marcado para ver sus datos.</p>';
+}
 function renderSemana(){
-  var t = todayN(), end = t + 6, up = (D.upcoming || []).map(function(r){ return Object.assign({ a: dnum(r.inDate), b: dnum(r.outDate) }, r); });
-  $("wk-range").textContent = longd(t) + " – " + longd(end);
-  var dh = "";
-  for (var n = t; n <= end; n++) {
-    var cls = "", tag = "";
-    up.forEach(function(r){ if (n === r.a) { cls = "in"; tag = "llega"; } else if (n === r.b) { cls = cls || "out"; tag = tag || "sale"; } else if (n > r.a && n < r.b && !cls) { cls = "occ"; } });
-    dh += '<div class="day ' + cls + (n === t ? " today" : "") + '">' + wd(n) + "<b>" + new Date(n * DAY).getUTCDate() + "</b><i>" + tag + "</i></div>";
+  var t = todayN(), up = upList();
+  $("today-lbl").textContent = "Hoy " + longd(t);
+  var cur = up.filter(function(r){ return r.a <= t && r.b >= t; });
+  if (cur.length) { $("now-title").textContent = cur.length > 1 ? "Reservas de hoy" : "Reserva actual"; $("now").innerHTML = cur.map(function(r){ return resCard(r, t); }).join(""); }
+  else {
+    var nx = up.filter(function(r){ return r.a > t; })[0];
+    $("now-title").textContent = nx ? "Próxima llegada" : "Reserva actual";
+    $("now").innerHTML = nx ? resCard(nx, t) : '<div class="empty">No hay huéspedes ni llegadas cargadas.</div>';
   }
-  $("days").innerHTML = dh;
-  var wk = up.filter(function(r){ return r.a <= end && r.b >= t; });
-  var h = wk.map(function(r){
-    var now = r.a <= t && r.b > t, pill;
-    if (r.b === t) pill = '<span class="pill mint">Sale hoy</span>';
-    else if (now) pill = '<span class="pill sky">En el depto ahora</span>';
-    else pill = '<span class="pill lav">Llega ' + rel(r.a, t) + "</span>";
-    var g = r.guests ? '<span class="pill butter">' + r.guests + (r.guests === 1 ? " huésped" : " huéspedes") + "</span>" : "";
-    var nights = r.b - r.a;
-    return '<article class="res ' + (now || r.b === t ? "now" : "next") + '"><div class="res-top"><div><div class="res-name">' + esc(r.first) + '</div><div class="muted" style="font-size:.88rem">' + nights + (nights === 1 ? " noche" : " noches") + '</div></div><div class="split">' + pill + g + "</div></div>" +
-      '<div class="io"><div><small>Ingreso</small><b>' + longd(r.a) + "</b>" + (r.inTime ? "<span>" + esc(hhmm(r.inTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>" +
-      "<div><small>Salida</small><b>" + longd(r.b) + "</b>" + (r.outTime ? "<span>" + esc(hhmm(r.outTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div></div>" +
-      (r.b <= end ? '<div class="clean-day">Limpieza: ' + longd(r.b) + (r.outTime ? ", después de las " + esc(r.outTime) : ", después de la salida") + "</div>" : "") + "</article>";
-  }).join("");
-  if (!wk.length) {
-    var nx = up.filter(function(r){ return r.a > end; })[0];
-    h = '<div class="empty">No hay huéspedes esta semana.' + (nx ? " Próxima llegada: <b>" + esc(nx.first) + "</b>, " + longd(nx.a) + (nx.guests ? " · " + nx.guests + " huéspedes" : "") + "." : "") + "</div>";
-  } else {
-    var nx2 = up.filter(function(r){ return r.a > end; })[0];
-    if (nx2) h += '<p class="muted" style="margin:2px 0 0;font-size:.9rem">Después: <b>' + esc(nx2.first) + "</b> llega el " + longd(nx2.a) + (nx2.guests ? " · " + nx2.guests + " huéspedes" : "") + ".</p>";
-  }
-  $("week").innerHTML = h;
+  renderCal(up.filter(function(r){ return r.b >= t; }), t);
   var pend = D.compras.filter(function(i){ return i.status !== "comprado"; }).reverse();
-  $("w-buy").innerHTML = pend.length ? pend.map(function(i){ return '<li class="it"><div class="si"><b>' + esc(i.text) + (i.qty ? " · " + esc(i.qty) : "") + "</b><span>" + (i.by ? "Pidió " + esc(i.by) : "") + "</span></div></li>"; }).join("") : '<li class="muted" style="padding:6px 0">Nada pendiente.</li>';
   var td = (D.tareas || []).filter(function(i){ return i.status !== "hecha"; }).reverse();
+  var tot = pend.length + td.length; $("cnt").hidden = !tot; $("cnt").textContent = tot;
+  $("w-buy").innerHTML = pend.length ? pend.map(function(i){ return '<li class="it"><div class="si"><b>' + esc(i.text) + (i.qty ? " · " + esc(i.qty) : "") + "</b><span>" + (i.by ? "Pidió " + esc(i.by) : "") + "</span></div></li>"; }).join("") : '<li class="muted" style="padding:6px 0">Nada pendiente.</li>';
+  $("w-todo").innerHTML = td.length ? td.map(function(i){ return '<li class="it"><div class="si"><b>' + esc(i.text) + "</b><span>" + (i.by ? esc(i.by) : "") + "</span></div></li>"; }).join("") : '<li class="muted" style="padding:6px 0">Nada pendiente.</li>';
   var cut = Date.now() - 7 * DAY, dn = (D.tareas || []).filter(function(i){ return i.status === "hecha" && Date.parse(i.doneAt) > cut; }).reverse();
-  $("w-todo").innerHTML = (td.length ? td.map(function(i){ return '<li class="it"><div class="si"><b>' + esc(i.text) + "</b><span>" + (i.by ? esc(i.by) + " · " : "") + esc(ft(i.createdAt)) + '</span></div><div class="acts"><button class="btn small primary" data-t="hecha" data-id="' + esc(i.id) + '">Hecha</button><button class="btn small" data-t="quitar" data-id="' + esc(i.id) + '">Quitar</button></div></li>'; }).join("") : '<li class="muted" style="padding:6px 0">Nada pendiente.</li>') +
+  $("todo").innerHTML = (td.length ? td.map(function(i){ return '<li class="it"><div class="si"><b>' + esc(i.text) + "</b><span>" + (i.by ? esc(i.by) + " · " : "") + esc(ft(i.createdAt)) + '</span></div><div class="acts"><button class="btn small primary" data-t="hecha" data-id="' + esc(i.id) + '">Hecha</button><button class="btn small" data-t="quitar" data-id="' + esc(i.id) + '">Quitar</button></div></li>'; }).join("") : '<li class="muted" style="padding:8px 0">No hay nada pendiente de hacer.</li>') +
     dn.map(function(i){ return '<li class="it"><div class="si done"><b>' + esc(i.text) + "</b><span>Hecha " + esc(ft(i.doneAt)) + '</span></div><div class="acts"><button class="btn small" data-t="pendiente" data-id="' + esc(i.id) + '">Deshacer</button></div></li>'; }).join("");
 }
 function setData(d){ D = d; D.upcoming = d.upcoming || []; D.tareas = d.tareas || []; renderCompras(); renderNotas(); renderSemana(); }
@@ -400,6 +463,8 @@ document.addEventListener("click", function(e){
     }).catch(function(){ tb.disabled = false; tnote("No se pudo guardar. Revisá la conexión.", true); });
     return;
   }
+  var rs = e.target.closest("[data-res]");
+  if (rs) { var ix = Number(rs.getAttribute("data-res")); selRes = selRes === ix ? null : ix; renderCal(upList().filter(function(r){ return r.b >= todayN(); }), todayN()); if (selRes !== null) $("resdet").scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
   var go = e.target.closest("[data-go]");
   if (go) { show(go.getAttribute("data-go")); return; }
   var b = e.target.closest("[data-a]");
