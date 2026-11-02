@@ -484,8 +484,11 @@ function load(){
     else $("pend").innerHTML = '<li class="muted">No se pudo cargar. Revisá la conexión y volvé a abrir la app.</li>';
   });
 }
+function relay(av){ (av || []).forEach(function(a){ try { fetch("https://ntfy.sh/", { method: "POST", mode: "no-cors", body: JSON.stringify(a) }); } catch (e) {} }); }
 function send(body){
-  return fetch(EXEC, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+  return fetch(EXEC, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) })
+    .then(function(r){ return r.text(); })
+    .then(function(t){ var j = null; try { j = JSON.parse(t); } catch (e) {} if (j && j.avisos) relay(j.avisos); return j || t; });
 }
 $("f").addEventListener("submit", function(e){
   e.preventDefault(); if (busy) return;
