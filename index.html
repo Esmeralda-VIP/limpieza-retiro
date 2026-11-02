@@ -168,6 +168,24 @@ body{overscroll-behavior-y:contain}
 .ptr.busy i svg{display:none}.ptr.busy i::after{content:"";width:10px;height:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---- próximas reservas ---- */
+.nlist{display:flex;flex-direction:column;gap:10px}
+.nitem{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.nitem.open{border-color:var(--lav-ink)}
+.nhead{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:48px minmax(0,1fr) auto 30px;gap:12px;align-items:center;padding:12px 14px;min-height:64px}
+.nhead:focus-visible{outline:2px solid var(--tile);outline-offset:-2px;border-radius:16px}
+.ndate{background:var(--lav);color:var(--lav-ink);border-radius:12px;text-align:center;padding:5px 0;line-height:1.05;display:flex;flex-direction:column}
+.ndate b{font-family:var(--fd);font-size:1.25rem}.ndate small{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.nmain{display:flex;flex-direction:column;min-width:0}
+.nmain b{font-family:var(--fd);font-size:1.08rem;color:var(--ink)}
+.nmain span{font-size:.84rem;color:var(--muted)}
+.nside{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.nhead .chev{width:30px;height:30px}
+.nitem.open .chev{transform:rotate(180deg)}
+.nbody{padding:0 10px 10px}
+.nbody .res{box-shadow:none}
+@media (max-width:420px){.nhead{grid-template-columns:44px minmax(0,1fr) 28px;row-gap:6px}.ndate{grid-row:1/3}.nside{grid-column:2;grid-row:2;flex-direction:row;justify-content:flex-start}.nhead .chev{grid-column:3;grid-row:1/3}}
 </style>
 </head>
 <body>
@@ -231,15 +249,8 @@ body{overscroll-behavior-y:contain}
       <div class="list" id="now"><div class="empty">Cargando…</div></div>
     </section>
     <section style="margin-top:22px">
-      <details class="cal" id="cal">
-        <summary><div><b>Calendario de reservas</b><span id="cal-sum"></span></div><i class="chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></i></summary>
-        <div class="cal-body">
-          <div class="legend" style="margin:0"><span><i class="dot" style="background:#C9B9EC"></i>Llegada</span><span><i class="dot" style="background:#A9D8BB"></i>Salida · limpieza</span><span><i class="dot" style="background:#B9D0E8"></i>Ocupado</span></div>
-          <div class="rchips" id="rchips"></div>
-          <div id="months"></div>
-          <div id="resdet"></div>
-        </div>
-      </details>
+      <div class="wk-head"><h2>Próximas reservas</h2><span class="muted" id="next-sum"></span></div>
+      <div class="nlist" id="next"><div class="empty">Cargando…</div></div>
     </section>
     <section style="margin-top:26px">
       <h2 style="margin-bottom:12px">Lo que quedó pendiente</h2>
@@ -381,8 +392,8 @@ function hhmm(x){ return x ? x + " h" : ""; }
 var MONEY_RE = /(\$|\busd\b|u\$s|\bars\b|\bpes[oa]s?\b|d[oó]lar|\beuros?\b|pag[oaué]|cobr|transfer|dep[oó]sit|reembols|devoluci[oó]n|tarifa|precio|cost[oó]|factur|\bse[ñn]a\b|efectivo|propina|\bplata\b|dinero|monto|cargo|tarjeta|mercado ?pago|\balias\b|\bcbu\b|\bcvu\b|money|refund|deposit|payment|\bfee\b|\bcash\b|\btip\b)/i;
 function notesOf(v){ return String(v || "").split(/\s*\|\s*/).map(function(x){ return x.trim(); }).filter(function(x){ return x && !MONEY_RE.test(x); }).slice(0, 6); }
 var selRes = null;
-function upList(){ return (D.upcoming || []).map(function(r){ return Object.assign({ a: dnum(r.inDate), b: dnum(r.outDate) }, r); }).sort(function(x, y){ return x.a - y.a; }); }
-function resCard(r, t){
+function upList(){ return (D.upcoming || []).map(function(r){ return Object.assign({ a: dnum(r.inDate), b: dnum(r.outDate), k: String(r.inDate) }, r); }).sort(function(x, y){ return x.a - y.a; }); }
+function resCard(r, t, compact){
   var now = r.a <= t && r.b > t, pill;
   if (r.b === t) pill = '<span class="pill mint">Sale hoy</span>';
   else if (now) pill = '<span class="pill sky">En el depto ahora</span>';
@@ -390,57 +401,42 @@ function resCard(r, t){
   else pill = '<span class="pill lav">Llega ' + rel(r.a, t) + "</span>";
   var g = r.guests ? '<span class="pill butter">' + r.guests + (r.guests === 1 ? " huésped" : " huéspedes") + "</span>" : "";
   var nights = r.b - r.a;
-  return '<article class="res ' + (now || r.b === t ? "now" : "next") + '"><div class="res-top"><div><div class="res-name">' + esc(r.first) + '</div><div class="muted" style="font-size:.88rem">' + nights + (nights === 1 ? " noche" : " noches") + '</div></div><div class="split">' + pill + g + "</div></div>" +
+  return '<article class="res ' + (now || r.b === t ? "now" : "next") + '">' + (compact ? "" : '<div class="res-top"><div><div class="res-name">' + esc(r.first) + '</div><div class="muted" style="font-size:.88rem">' + nights + (nights === 1 ? " noche" : " noches") + '</div></div><div class="split">' + pill + g + "</div></div>") +
     '<div class="io"><div><small>Ingreso</small><b>' + longd(r.a) + "</b>" + (r.inTime ? "<span>" + esc(hhmm(r.inTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>" +
     "<div><small>Salida</small><b>" + longd(r.b) + "</b>" + (r.outTime ? "<span>" + esc(hhmm(r.outTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div></div>" +
     (function(){ var ns = notesOf(r.notes); return ns.length ? '<div class="wnotes"><small>Pedidos del huésped</small>' + ns.map(function(x){ return "<span>" + esc(x).replace(/\((a confirmar)\)/i, '<span class="tbc">($1)</span>') + "</span>"; }).join("") + "</div>" : ""; })() +
     '<div class="clean-day">Limpieza: ' + longd(r.b) + (r.outTime ? ", después de las " + esc(r.outTime) : ", después de la salida") + "</div></article>";
 }
 var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-function renderCal(up, t){
-  if (!up.length) { $("cal-sum").textContent = "No hay reservas cargadas."; $("months").innerHTML = ""; $("rchips").innerHTML = ""; $("resdet").innerHTML = ""; return; }
-  var last = up[up.length - 1].b;
-  $("cal-sum").textContent = "Hasta el " + longd(last) + " · " + up.length + (up.length === 1 ? " reserva" : " reservas");
-  if (selRes !== null && !up[selRes]) selRes = null;
-  $("rchips").innerHTML = up.map(function(r, i){ return '<button type="button" class="rchip" data-res="' + i + '" aria-pressed="' + (selRes === i) + '">' + esc(r.first) + " · " + fd(r.inDate) + " – " + fd(r.outDate) + "</button>"; }).join("");
-  var d0 = new Date(t * DAY), y = d0.getUTCFullYear(), m = d0.getUTCMonth(), html = "";
-  var dl = new Date(last * DAY), ly = dl.getUTCFullYear(), lm = dl.getUTCMonth();
-  while (y < ly || (y === ly && m <= lm)) {
-    var first = Math.round(Date.UTC(y, m, 1) / DAY), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-    var lead = (new Date(first * DAY).getUTCDay() + 6) % 7, g = "";
-    ["L","M","M","J","V","S","D"].forEach(function(w){ g += '<div class="wdh">' + w + "</div>"; });
-    for (var k = 0; k < lead; k++) g += "<div></div>";
-    for (var dd = 0; dd < days; dd++) {
-      var n = first + dd, cls = [], tag = "", ri = null, isIn = false, isOut = false;
-      up.forEach(function(r, i){
-        if (n === r.a) { isIn = true; ri = i; }
-        else if (n === r.b) { isOut = true; if (ri === null) ri = i; }
-        else if (n > r.a && n < r.b) { cls.push("occ"); ri = i; }
-      });
-      if (isIn && isOut) { cls = ["turn"]; tag = "sale/llega"; } else if (isIn) { cls = ["in"]; tag = "llega"; } else if (isOut) { cls = ["out"]; tag = "sale"; }
-      if (n < t) cls.push("past");
-      if (n === t) cls.push("today");
-      if (ri !== null && selRes === ri) cls.push("sel");
-      g += ri !== null ? '<button type="button" class="cd ' + cls.join(" ") + '" data-res="' + ri + '" aria-label="' + longd(n) + ", " + esc(up[ri].first) + '">' + (dd + 1) + (tag ? "<small>" + tag + "</small>" : "") + "</button>"
-                       : '<div class="cd ' + cls.join(" ") + '">' + (dd + 1) + "</div>";
-    }
-    html += '<div class="month"><h4>' + MES[m] + " " + y + '</h4><div class="grid">' + g + "</div></div>";
-    m++; if (m > 11) { m = 0; y++; }
-  }
-  $("months").innerHTML = html;
-  $("resdet").innerHTML = selRes !== null ? resCard(up[selRes], t) : '<p class="muted" style="margin:0;font-size:.9rem">Tocá una reserva o un día marcado para ver sus datos.</p>';
+function renderNext(up, t, shown){
+  var list = up.filter(function(r){ return r.a > t && shown.indexOf(r.k) < 0; }).slice(0, 5);
+  var total = up.filter(function(r){ return r.a > t && shown.indexOf(r.k) < 0; }).length;
+  $("next-sum").textContent = total > 5 ? "Las 5 más cercanas de " + total : "";
+  if (!list.length) { $("next").innerHTML = '<div class="empty">No hay más reservas por delante.</div>'; return; }
+  if (selRes !== null && !list.some(function(r){ return r.k === selRes; })) selRes = null;
+  $("next").innerHTML = list.map(function(r){
+    var open = selRes === r.k, n = r.b - r.a;
+    return '<div class="nitem' + (open ? " open" : "") + '"><button type="button" class="nhead" data-res="' + esc(r.k) + '" aria-expanded="' + open + '">' +
+      '<span class="ndate"><b>' + new Date(r.a * DAY).getUTCDate() + '</b><small>' + MES[new Date(r.a * DAY).getUTCMonth()].slice(0, 3) + '</small></span>' +
+      '<span class="nmain"><b>' + esc(r.first) + '</b><span>' + longd(r.a) + ' → ' + longd(r.b) + ' · ' + n + (n === 1 ? " noche" : " noches") + '</span></span>' +
+      '<span class="nside"><span class="pill lav">' + rel(r.a, t).replace(/^en /, "En ") + '</span>' + (r.guests ? '<span class="pill butter">' + r.guests + (r.guests === 1 ? ' huésped' : ' huéspedes') + '</span>' : '') + '</span>' +
+      '<i class="chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></i></button>' +
+      (open ? '<div class="nbody">' + resCard(r, t, true) + '</div>' : '') + '</div>';
+  }).join("");
 }
 function renderSemana(){
   var t = todayN(), up = upList();
   $("today-lbl").textContent = "Hoy " + longd(t);
   var cur = up.filter(function(r){ return r.a <= t && r.b >= t; });
-  if (cur.length) { $("now-title").textContent = cur.length > 1 ? "Reservas de hoy" : "Reserva actual"; $("now").innerHTML = cur.map(function(r){ return resCard(r, t); }).join(""); }
+  var shown = [];
+  if (cur.length) { $("now-title").textContent = cur.length > 1 ? "Reservas de hoy" : "Reserva actual"; $("now").innerHTML = cur.map(function(r){ return resCard(r, t); }).join(""); shown = cur.map(function(r){ return r.k; }); }
   else {
     var nx = up.filter(function(r){ return r.a > t; })[0];
     $("now-title").textContent = nx ? "Próxima llegada" : "Reserva actual";
     $("now").innerHTML = nx ? resCard(nx, t) : '<div class="empty">No hay huéspedes ni llegadas cargadas.</div>';
+    if (nx) shown = [nx.k];
   }
-  renderCal(up.filter(function(r){ return r.b >= t; }), t);
+  renderNext(up, t, shown);
   var pend = D.compras.filter(function(i){ return i.status !== "comprado"; }).reverse();
   var td = (D.tareas || []).filter(function(i){ return i.status !== "hecha"; }).reverse();
   var tot = pend.length + td.length; $("cnt").hidden = !tot; $("cnt").textContent = tot;
@@ -504,7 +500,7 @@ document.addEventListener("click", function(e){
     return;
   }
   var rs = e.target.closest("[data-res]");
-  if (rs) { var ix = Number(rs.getAttribute("data-res")); selRes = selRes === ix ? null : ix; renderCal(upList().filter(function(r){ return r.b >= todayN(); }), todayN()); if (selRes !== null) $("resdet").scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
+  if (rs) { var code = rs.getAttribute("data-res"); selRes = selRes === code ? null : code; renderSemana(); if (selRes !== null) { var hd = document.querySelector('.nhead[data-res="' + code.replace(/"/g, "") + '"]'); if (hd) hd.scrollIntoView({ behavior: "smooth", block: "nearest" }); } return; }
   var go = e.target.closest("[data-go]");
   if (go) { show(go.getAttribute("data-go")); return; }
   var b = e.target.closest("[data-a]");
