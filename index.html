@@ -199,6 +199,16 @@ a.link{color:var(--tile);font-weight:700}
 .lug{background:var(--tile-soft);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:.9rem;display:flex;flex-direction:column;gap:3px}
 .lug small{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tile)}
 .lug .tbc{color:var(--warn);font-weight:700}
+
+.wnotes.clamp .nitems{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wnotes.clamp .nitems>span:not(:last-child)::after{content:" · "}
+.wnotes .nitems{display:flex;flex-direction:column;gap:3px}
+.wnotes.clamp .nitems{display:-webkit-box}
+.wnotes .more{all:unset;cursor:pointer;font-weight:700;font-size:.82rem;color:var(--notes-h);align-self:flex-start;padding:2px 0;text-decoration:underline;text-underline-offset:2px}
+.clean-day.ready{background:var(--good);color:var(--on-tile)}
+.io .was{text-decoration:line-through;font-size:.82rem}
+.leftask{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:12px;padding:8px 10px;font-size:.9rem;font-weight:700}
+.link-btn.small{min-height:32px;padding:4px 0;font-size:.85rem;align-self:flex-start}
 </style>
 </head>
 <body>
@@ -425,20 +435,37 @@ function lugHTML(r){
   return h + "</div>";
 }
 function lugPill(r){ var l = r.luggage; if (!l || (!l.drop && !l.pickup)) return ""; return '<span class="pill sky">Valijas' + (l.drop && l.drop !== "?" ? " " + esc(l.drop) : (!l.drop && l.pickup && l.pickup !== "?" ? " hasta " + esc(l.pickup) : "")) + "</span>"; }
+var openNotes = {}, confirmLeft = null;
+function leftWhen(l){ return longd(dnum(l.date)) + (l.time ? (/^\d/.test(l.time) ? " a las " + esc(l.time) + " h" : " " + esc(l.time)) : ""); }
+function notesHTML(r){
+  var ns = notesOf(r.notes); if (!ns.length) return "";
+  var k = String(r.a), open = !!openNotes[k], long = ns.length > 1 || ns[0].length > 70;
+  var fmtN = function(x){ return "<span>" + esc(x).replace(/\((a confirmar)\)/i, '<span class="tbc">($1)</span>') + "</span>"; };
+  return '<div class="wnotes' + (long && !open ? " clamp" : "") + '"><small>Pedidos del huésped</small><div class="nitems">' + ns.map(fmtN).join("") + "</div>" +
+    (long ? '<button type="button" class="more" data-notes="' + k + '">' + (open ? "Ver menos" : "Ver más" + (ns.length > 1 ? " (" + ns.length + ")" : "")) + "</button>" : "") + "</div>";
+}
 function resCard(r, t, compact){
-  var now = r.a <= t && r.b > t, pill;
-  if (r.b === t) pill = '<span class="pill mint">Sale hoy</span>';
+  var now = r.a <= t && r.b > t, gone = !!r.left, pill;
+  if (gone && r.b >= t) pill = '<span class="pill mint">Ya salió</span>';
+  else if (r.b === t) pill = '<span class="pill mint">Sale hoy</span>';
   else if (now) pill = '<span class="pill sky">En el depto ahora</span>';
   else if (r.b < t) pill = '<span class="pill">Terminada</span>';
   else pill = '<span class="pill lav">Llega ' + rel(r.a, t) + "</span>";
   var g = (r.guests ? '<span class="pill butter">' + r.guests + (r.guests === 1 ? " huésped" : " huéspedes") + "</span>" : "") + lugPill(r);
-  var nights = r.b - r.a;
+  var nights = r.b - r.a, here = r.a <= t && r.b >= t;
+  var outBox = gone ? "<div><small>Salida</small><b>Ya salió</b><span>" + leftWhen(r.left) + "</span><span class=\"was\">Prevista " + longd(r.b) + (r.outTime ? " " + esc(hhmm(r.outTime)) : "") + "</span></div>"
+    : "<div><small>Salida</small><b>" + longd(r.b) + "</b>" + (r.outTime ? "<span>" + esc(hhmm(r.outTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>";
+  var clean = gone ? '<div class="clean-day ready">Ya liberado para limpiar · se fue el ' + leftWhen(r.left) + "</div>"
+    : '<div class="clean-day">Limpieza: ' + longd(r.b) + (r.outTime ? ", después de las " + esc(r.outTime) : ", después de la salida") + "</div>";
+  var act = "";
+  if (here && !compact) {
+    if (gone) act = '<button type="button" class="link-btn small" data-left="no" data-in="' + esc(r.inDate) + '">Deshacer "ya salió"</button>';
+    else if (confirmLeft === r.inDate) act = '<div class="leftask"><span>¿Confirmás que ' + esc(r.first) + ' ya se fue?</span><button type="button" class="btn small primary" data-left="si" data-in="' + esc(r.inDate) + '">Sí, ya salió</button><button type="button" class="btn small" data-left="cancel">No</button></div>';
+    else act = '<button type="button" class="btn small" data-left="ask" data-in="' + esc(r.inDate) + '">Marcar que ya salió</button>';
+  }
   return '<article class="res ' + (now || r.b === t ? "now" : "next") + '">' + (compact ? "" : '<div class="res-top"><div><div class="res-name">' + esc(r.first) + '</div><div class="muted" style="font-size:.88rem">' + nights + (nights === 1 ? " noche" : " noches") + '</div></div><div class="split">' + pill + g + "</div></div>") +
-    '<div class="io"><div><small>Ingreso</small><b>' + longd(r.a) + "</b>" + (r.inTime ? "<span>" + esc(hhmm(r.inTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>" +
-    "<div><small>Salida</small><b>" + longd(r.b) + "</b>" + (r.outTime ? "<span>" + esc(hhmm(r.outTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div></div>" +
-    (function(){ var ns = notesOf(r.notes); return ns.length ? '<div class="wnotes"><small>Pedidos del huésped</small>' + ns.map(function(x){ return "<span>" + esc(x).replace(/\((a confirmar)\)/i, '<span class="tbc">($1)</span>') + "</span>"; }).join("") + "</div>" : ""; })() +
-    lugHTML(r) +
-    '<div class="clean-day">Limpieza: ' + longd(r.b) + (r.outTime ? ", después de las " + esc(r.outTime) : ", después de la salida") + "</div></article>";
+    '<div class="io"><div><small>Ingreso</small><b>' + longd(r.a) + "</b>" + (r.inTime ? "<span>" + esc(hhmm(r.inTime)) + "</span>" : '<span class="tbc">Horario a confirmar</span>') + "</div>" + outBox + "</div>" +
+    notesHTML(r) + lugHTML(r) + clean + act + "</article>";
 }
 var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 function renderNext(up, t, shown){
@@ -547,6 +574,20 @@ document.addEventListener("click", function(e){
   if (rs) { var code = rs.getAttribute("data-res"); selRes = selRes === code ? null : code; renderSemana(); if (selRes !== null) { var hd = document.querySelector('.nhead[data-res="' + code.replace(/"/g, "") + '"]'); if (hd) hd.scrollIntoView({ behavior: "smooth", block: "nearest" }); } return; }
   var go = e.target.closest("[data-go]");
   if (go) { show(go.getAttribute("data-go")); return; }
+  var nb = e.target.closest("[data-notes]");
+  if (nb) { var nk = nb.getAttribute("data-notes"); openNotes[nk] = !openNotes[nk]; renderSemana(); return; }
+  var lb = e.target.closest("[data-left]");
+  if (lb) {
+    var la = lb.getAttribute("data-left"), li = lb.getAttribute("data-in");
+    if (la === "ask") { confirmLeft = li; renderSemana(); return; }
+    if (la === "cancel") { confirmLeft = null; renderSemana(); return; }
+    var on = la === "si", by = ""; try { by = localStorage.getItem("limpieza_nombre") || ""; } catch (err) {}
+    lb.disabled = true; confirmLeft = null;
+    (D.upcoming || []).forEach(function(u){ if (u.inDate === li) { var n = new Date(); u.left = on ? { date: n.getFullYear() + "-" + ("0" + (n.getMonth() + 1)).slice(-2) + "-" + ("0" + n.getDate()).slice(-2), time: ("0" + n.getHours()).slice(-2) + ":" + ("0" + n.getMinutes()).slice(-2) } : null; } });
+    renderSemana();
+    send({ op: "salio", inDate: li, action: on ? "si" : "no", by: by }).then(function(){ return load(); }).catch(function(){ load(); });
+    return;
+  }
   var b = e.target.closest("[data-a]");
   if (b) {
     var id = b.getAttribute("data-id"), a = b.getAttribute("data-a");
